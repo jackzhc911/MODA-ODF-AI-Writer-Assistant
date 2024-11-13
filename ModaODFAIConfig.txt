@@ -1,0 +1,2 @@
+ConfigValue1=https://api.groq.com/openai/v1/chat/completions
+ConfigValue2=gsk_

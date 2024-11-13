@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+Option VBASupport 1
+
+Sub showGenerateDialogBox
+    DialogLibraries.LoadLibrary(&quot;aiAssistant&quot;)
+    oDialog1 = CreateUnoDialog( DialogLibraries.aiAssistant.dlgGenerate )
+    oDialog1.Execute()
+End Sub
+
+sub btn_Cancel(e)
+	&apos; 取消
+	dlg = e.Source.context
+	
+	dlg.endDialog(1)
+End Sub
+
+Sub btn_Send(e)
+	&apos; 送出
+	dlg = e.Source.context
+	
+	prompt = trim(dlg.getControl(&quot;TextField1&quot;).Text)
+	If prompt = &quot;&quot; Then 
+		msgbox &quot;欄位為必填&quot;
+		Exit Sub
+	EndIf
+	
+	apiKey = Utility.GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)	&apos; key
+	messages = &quot;[{&quot;&quot;role&quot;&quot;: &quot;&quot;system&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;You are a POWERFULL and Intelligent AI assistant.&quot;&quot;}, {&quot;&quot;role&quot;&quot;: &quot;&quot;user&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;&quot; &amp; prompt &amp; &quot;&quot;&quot;}]&quot;
+
+    &apos; 呼叫 OpenAI API
+    responseText = SendOpenAIRequest(messages, apiKey)
+    
+    &apos; 處理回傳值
+    result = ExtractContent(responseText)
+    
+    &apos; 顯示回應
+    &apos; MsgBox result
+    
+    &apos; 將回應插入到游標處
+    oDoc = ThisComponent
+    oText = oDoc.Text
+    oCursor = oDoc.CurrentController.getViewCursor()
+    oText.insertString oCursor, result, False
+	
+End Sub
+
+
+Sub CallOpenAI_VBA_TEST()
+    Dim prompt As String
+    Dim apiKey As String
+    Dim responseText As String
+    
+    &apos; 設定您的 OpenAI API 金鑰和提示內容
+    apiKey =  Utility.GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)	&apos; key
+    prompt = &quot;你剛當選中華民國總統，請用50個字描述你現在的心情&quot;
+    messages = &quot;[{&quot;&quot;role&quot;&quot;: &quot;&quot;system&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;You are a POWERFULL and Intelligent AI assistant.&quot;&quot;}, {&quot;&quot;role&quot;&quot;: &quot;&quot;user&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;&quot; &amp; prompt &amp; &quot;&quot;&quot;}]&quot;
+
+    &apos; 呼叫 OpenAI API
+    responseText = SendOpenAIRequest(messages, apiKey)
+    
+    &apos; 處理回傳值
+    result = ExtractContent(responseText)
+    
+    &apos; 顯示回應
+    MsgBox result
+End Sub
+
+Function SendOpenAIRequest(prompt As String, apiKey As String) As String
+    Dim http As Object
+    Dim url As String
+    Dim requestBody As String
+    Dim response As String
+    
+    &apos; OpenAI API URL
+    url =  Utility.GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)	&apos; api
+    
+    &apos; 設定請求的 JSON 內容
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-8b-instant&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    
+    &apos; 建立 XMLHTTP 物件
+    Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)
+    
+    &apos; 配置 HTTP POST 請求
+    http.Open &quot;POST&quot;, url, False
+    http.setRequestHeader &quot;Content-Type&quot;, &quot;application/json&quot;
+    http.setRequestHeader &quot;Authorization&quot;, &quot;Bearer &quot; &amp; apiKey
+    
+    &apos; 發送請求
+    &apos;msgbox requestBody
+    http.send requestBody
+    
+    &apos; 取得回應
+    If http.Status = 200 Then
+        &apos; 成功時解析回應
+        response = http.responseText
+    Else
+        &apos; 發生錯誤時回傳錯誤代碼
+        response = &quot;Error: &quot; &amp; http.Status &amp; &quot; - &quot; &amp; http.statusText
+    End If
+    
+    SendOpenAIRequest = response
+End Function
+
+Function ExtractContent(jsonResponse As String) As String
+    Dim startPos As Long
+    Dim endPos As Long
+    Dim content As String
+    
+    &apos; 查找 &quot;content&quot; 的位置
+    startPos = InStr(jsonResponse, &quot;&quot;&quot;content&quot;&quot;:&quot;&quot;&quot;) + Len(&quot;&quot;&quot;content&quot;&quot;:&quot;&quot;&quot;)
+    
+    &apos; 如果找到 &quot;content&quot; 部分，則提取其值
+    If startPos &gt; 0 Then
+        endPos = InStr(startPos, jsonResponse, &quot;&quot;&quot;}&quot;)
+        content = Mid(jsonResponse, startPos, endPos - startPos)
+    Else
+        content = &quot;Content not found&quot;
+    End If
+    
+    &apos; 返回提取的內容
+    ExtractContent = content
+End Function
+</script:module>

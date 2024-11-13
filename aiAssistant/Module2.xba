@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module2" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+
+Option VBASupport 1
+
+Global oModelessDialog As Object
+Global Continue as Boolean
+
+Sub replaceSelTextInWriter(txtReplacing)
+	Dim oDoc As Object
+    Dim oController As Object
+    Dim oSelection As Object
+    Dim selectedText As String
+    
+    &apos; 取得目前的 Writer 文件
+    oDoc = ThisComponent
+    
+    &apos; 取得文件的控制器（即視圖）
+    oController = oDoc.CurrentController
+    
+    &apos; 獲取選取的內容
+    oSelection = oController.getSelection()
+    
+    &apos; 檢查是否有選取的文字
+    If oSelection.getCount() &gt; 0 Then
+        &apos; 若有選取文字，提取選取的文字內容
+        oSelection.getByIndex(0).setString(txtReplacing)
+    End If
+End Sub
+
+Function getSelectedTextInWriter()
+    Dim oDoc As Object
+    Dim oController As Object
+    Dim oSelection As Object
+    Dim selectedText As String
+    
+    &apos; 取得目前的 Writer 文件
+    oDoc = ThisComponent
+    
+    &apos; 取得文件的控制器（即視圖）
+    oController = oDoc.CurrentController
+    
+    &apos; 獲取選取的內容
+    oSelection = oController.getSelection()
+    
+    &apos; 檢查是否有選取的文字
+    If oSelection.getCount() &gt; 0 Then
+        &apos; 若有選取文字，提取選取的文字內容
+        selectedText = oSelection.getByIndex(0).getString()
+    Else
+        &apos; 若沒有選取任何文字，顯示提示
+        selectedText = &quot;&quot;
+    End If
+    
+    &apos; 顯示選取的文字
+    getSelectedTextInWriter = selectedText
+End Sub
+
+Sub showRewriteDialogBox
+    Dim oWindowPeer As Object
+    Dim oDlgModel as Object
+
+	oDlgModel = CreateUnoService(&quot;com.sun.star.awt.UnoControlDialogModel&quot;)
+	oDlgModel.Title = &quot;Dialog Title&quot;
+
+    DialogLibraries.LoadLibrary(&quot;aiAssistant&quot;)
+    
+    oModelessDialog = CreateUnoDialog( DialogLibraries.aiAssistant.dlgRewrite )
+    
+    &apos; 設置無模式視窗：取得當前 Writer 視窗的 WindowPeer，將它傳遞給對話框
+    oWindowPeer = ThisComponent.getCurrentController().getFrame().getContainerWindow()
+    oModelessDialog.createPeer(CreateUnoService(&quot;com.sun.star.awt.Toolkit&quot;), oWindowPeer)
+    
+    oListenerTop=createUnoListener(&quot;TopListen_&quot;, &quot;com.sun.star.awt.XTopWindowListener&quot;)
+    oModelessDialog.addTopWindowlistener(oListenerTop) 
+    
+    &apos; 顯示無模式視窗
+    Continue = true
+    do while Continue
+    	wait 20
+	    oModelessDialog.setVisible(True)
+	loop
+    &apos;oModelessDialog.execute()
+
+End Sub
+
+sub btn_Cancel(e)
+	&apos; 取消
+	Continue=false
+	dlg = e.Source.context
+	
+	dlg.endDialog(1)
+End Sub
+
+Sub btn_Send(e)
+	&apos; 送出
+	dlg = e.Source.context
+	
+	prompt = trim(dlg.getControl(&quot;TextField1&quot;).Text)
+	If prompt = &quot;&quot; Then 
+		msgbox &quot;欄位為必填&quot;
+		Exit Sub
+	EndIf
+	
+	selText = getSelectedTextInWriter()
+	If selText = &quot;&quot; Then
+		msgbox &quot;請選取要重寫的文字&quot;
+		Exit Sub
+	End If
+	
+	txtInput = prompt &amp; &quot;\n&quot; &amp; selText
+	
+	apiKey =  Utility.GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)	&apos; key
+	messages = &quot;[{&quot;&quot;role&quot;&quot;: &quot;&quot;system&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;You are a POWERFULL and Intelligent AI assistant.&quot;&quot;}, {&quot;&quot;role&quot;&quot;: &quot;&quot;user&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;&quot; &amp; txtInput &amp; &quot;&quot;&quot;}]&quot;
+
+    &apos; 呼叫 OpenAI API
+    responseText = SendOpenAIRequest(messages, apiKey)
+    
+    &apos; 處理回傳值
+    result = ExtractContent(responseText)
+    
+    &apos; 顯示回應
+    ans = MsgBox(result &amp; vbCrLf &amp; &quot;是否保留改寫結果?&quot;, MB_YESNO)
+    If ans = IDYES Then
+    	&apos; 確認則替換回應到選取區塊
+    replaceSelTextInWriter result
+    End If
+End Sub
+
+Function SendOpenAIRequest(prompt As String, apiKey As String) As String
+    Dim http As Object
+    Dim url As String
+    Dim requestBody As String
+    Dim response As String
+    
+    &apos; OpenAI API URL
+    url =  Utility.GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)	&apos; api
+    
+    &apos; 設定請求的 JSON 內容
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-8b-instant&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    
+    &apos; 建立 XMLHTTP 物件
+    Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)
+    
+    &apos; 配置 HTTP POST 請求
+    http.Open &quot;POST&quot;, url, False
+    http.setRequestHeader &quot;Content-Type&quot;, &quot;application/json&quot;
+    http.setRequestHeader &quot;Authorization&quot;, &quot;Bearer &quot; &amp; apiKey
+    
+    &apos; 發送請求
+    &apos;msgbox requestBody
+    http.send requestBody
+    
+    &apos; 取得回應
+    If http.Status = 200 Then
+        &apos; 成功時解析回應
+        response = http.responseText
+    Else
+        &apos; 發生錯誤時回傳錯誤代碼
+        response = &quot;Error: &quot; &amp; http.Status &amp; &quot; - &quot; &amp; http.statusText
+    End If
+    
+    SendOpenAIRequest = response
+End Function
+
+Function ExtractContent(jsonResponse As String) As String
+    Dim startPos As Long
+    Dim endPos As Long
+    Dim content As String
+    
+    &apos; 查找 &quot;content&quot; 的位置
+    startPos = InStr(jsonResponse, &quot;&quot;&quot;content&quot;&quot;:&quot;&quot;&quot;) + Len(&quot;&quot;&quot;content&quot;&quot;:&quot;&quot;&quot;)
+    
+    &apos; 如果找到 &quot;content&quot; 部分，則提取其值
+    If startPos &gt; 0 Then
+        endPos = InStr(startPos, jsonResponse, &quot;&quot;&quot;}&quot;)
+        content = Mid(jsonResponse, startPos, endPos - startPos)
+    Else
+        content = &quot;Content not found&quot;
+    End If
+    
+    &apos; 返回提取的內容
+    ExtractContent = content
+End Function
+
+sub TopListen_WindowClosing
+	Continue=false
+end sub
+sub  TopListen_windowOpened
+end sub
+sub  TopListen_windowClosed
+end sub
+sub TopListen_windowMinimized
+end sub
+sub  TopListen_windowNormalized
+end sub
+sub  TopListen_windowActivated
+end sub
+sub  TopListen_windowDeactivated
+end sub
+sub  TopListen_disposing
+end sub
+</script:module>

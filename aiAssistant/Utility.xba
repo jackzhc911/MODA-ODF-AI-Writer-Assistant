@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Utility" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+
+Sub Main
+
+End Sub
+
+
+Global oConfigDialog As Object
+
+
+Sub ShowConfigDialog()
+    Dim sValue1 As String	&apos;API URL
+    Dim sValue2 As String	&apos;API KEY
+    
+    &apos; 讀取先前儲存的全域屬性值
+    sValue1 = GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)
+    sValue2 = GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)
+    
+    &apos; 創建並顯示對話框
+    oConfigDialog = CreateUnoDialog(DialogLibraries.aiAssistant.dlgConfig)
+    
+    &apos; 將屬性值填入對話框的文字框
+    oConfigDialog.getControl(&quot;ConfigField1&quot;).Text = sValue1
+    oConfigDialog.getControl(&quot;ConfigField2&quot;).Text = sValue2
+    
+    &apos; 顯示對話框，按下確定後才繼續執行
+    If oConfigDialog.execute() = 1 Then
+        &apos; 取得使用者輸入的值
+        sValue1 = oConfigDialog.getControl(&quot;ConfigField1&quot;).Text
+        sValue2 = oConfigDialog.getControl(&quot;ConfigField2&quot;).Text
+        
+        &apos; 儲存到全域配置中
+        SetUserConfig(&quot;ConfigValue1&quot;, sValue1)
+        SetUserConfig(&quot;ConfigValue2&quot;, sValue2)
+    End If
+    
+    oConfigDialog.endDialog(1)
+End Sub
+
+Sub btn_save(e)
+
+	dlg = e.Source.context
+	
+	dlg.endDialog(1)
+
+End Sub
+
+
+&apos; 從外部文字檔讀取配置值
+Function GetUserConfig(sKey As String, sDefault As String) As String
+&apos;    On Error GoTo ErrorHandler
+    Dim sFilePath As String
+    sFilePath = GetConfigFilePath()
+    
+    Dim sLine As String, arr() As String
+    Dim oFile As Integer
+    oFile = FreeFile
+    
+    Open sFilePath For Input As oFile
+    Do Until EOF(oFile)
+        Line Input #oFile, sLine
+        arr = Split(sLine, &quot;=&quot;)
+        If arr(0) = sKey Then
+            GetUserConfig = arr(1)
+            Close #oFile
+            Exit Function
+        End If
+    Loop
+    Close #oFile
+    
+&apos;ErrorHandler:
+&apos;    GetUserConfig = sDefault
+End Function
+
+&apos; 儲存配置值到外部文字檔
+Sub SetUserConfig(sKey As String, sValue As String)
+    Dim sFilePath As String
+    sFilePath = GetConfigFilePath()
+    
+    Dim oFile As Integer
+    oFile = FreeFile
+    
+    &apos; 讀取現有配置
+    Dim sLine As String, arr() As String, configDict As Object
+    Set configDict = CreateObject(&quot;Scripting.Dictionary&quot;)
+    
+    &apos; 開啟現有設定檔案
+    On Error Resume Next
+    Open sFilePath For Input As #oFile
+    Do Until EOF(oFile)
+        Line Input #oFile, sLine
+        arr = Split(sLine, &quot;=&quot;)
+        If UBound(arr) = 1 Then
+            configDict(arr(0)) = arr(1)
+        End If
+    Loop
+    Close #oFile
+    On Error GoTo 0
+    
+    &apos; 更新指定的配置項目
+    configDict(sKey) = sValue
+    
+    &apos; 寫回更新後的配置
+    oFile = FreeFile
+    Open sFilePath For Output As #oFile
+    Dim k As Variant
+    For Each k In configDict.Keys
+        Print #oFile, k &amp; &quot;=&quot; &amp; configDict(k)
+    Next k
+    Close #oFile
+End Sub
+
+&apos; 設定檔案路徑
+Function GetConfigFilePath() As String
+    &apos; 設定檔案儲存在應用程式的設定資料夾中
+    GetConfigFilePath = Environ(&quot;APPDATA&quot;) &amp; &quot;\MODAODFApplicationTools\3\user\ModaODFAIConfig.txt&quot;
+End Function
+</script:module>

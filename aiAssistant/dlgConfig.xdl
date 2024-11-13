@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="dlgConfig" dlg:left="140" dlg:top="127" dlg:width="256" dlg:height="106" dlg:closeable="true" dlg:moveable="true">
+ <dlg:styles>
+  <dlg:style dlg:style-id="0" dlg:font-height="12"/>
+  <dlg:style dlg:style-id="1" dlg:font-height="12"/>
+  <dlg:style dlg:style-id="2" dlg:font-height="16"/>
+ </dlg:styles>
+ <dlg:bulletinboard>
+  <dlg:text dlg:style-id="0" dlg:id="Label1" dlg:tab-index="0" dlg:left="10" dlg:top="10" dlg:width="41" dlg:height="20" dlg:value="API URL:" dlg:valign="center"/>
+  <dlg:text dlg:style-id="1" dlg:id="Label2" dlg:tab-index="2" dlg:left="10" dlg:top="45" dlg:width="41" dlg:height="20" dlg:value="API KEY:" dlg:valign="center"/>
+  <dlg:button dlg:style-id="2" dlg:id="CommandButton1" dlg:tab-index="4" dlg:left="101" dlg:top="75" dlg:width="60" dlg:height="22" dlg:value="儲存">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:aiAssistant.Utility.btn_save?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:textfield dlg:style-id="1" dlg:id="ConfigField1" dlg:tab-index="3" dlg:left="57" dlg:top="10" dlg:width="191" dlg:height="22"/>
+  <dlg:textfield dlg:style-id="0" dlg:id="ConfigField2" dlg:tab-index="1" dlg:left="57" dlg:top="45" dlg:width="191" dlg:height="22"/>
+ </dlg:bulletinboard>
+</dlg:window>
