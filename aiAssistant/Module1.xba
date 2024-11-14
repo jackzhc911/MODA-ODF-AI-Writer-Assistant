@@ -77,7 +77,7 @@ Function SendOpenAIRequest(prompt As String, apiKey As String) As String
     url =  Utility.GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)	&apos; api
     
     &apos; 設定請求的 JSON 內容
-    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-8b-instant&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-70b-versatile&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
     
     &apos; 建立 XMLHTTP 物件
     Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)

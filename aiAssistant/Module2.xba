@@ -7,6 +7,34 @@ Option VBASupport 1
 Global oModelessDialog As Object
 Global Continue as Boolean
 
+Public Sub showRewriteDialogBox
+    Dim oWindowPeer As Object
+    Dim oDlgModel as Object
+
+	oDlgModel = CreateUnoService(&quot;com.sun.star.awt.UnoControlDialogModel&quot;)
+	oDlgModel.Title = &quot;Dialog Title&quot;
+
+    DialogLibraries.LoadLibrary(&quot;aiAssistant&quot;)
+    
+    oModelessDialog = CreateUnoDialog( DialogLibraries.aiAssistant.dlgRewrite )
+    
+    &apos; 設置無模式視窗：取得當前 Writer 視窗的 WindowPeer，將它傳遞給對話框
+    oWindowPeer = ThisComponent.getCurrentController().getFrame().getContainerWindow()
+    oModelessDialog.createPeer(CreateUnoService(&quot;com.sun.star.awt.Toolkit&quot;), oWindowPeer)
+    
+    oListenerTop=createUnoListener(&quot;TopListen_&quot;, &quot;com.sun.star.awt.XTopWindowListener&quot;)
+    oModelessDialog.addTopWindowlistener(oListenerTop) 
+    
+    &apos; 顯示無模式視窗
+    Continue = true
+    do while Continue
+    	wait 20
+	    oModelessDialog.setVisible(True)
+	loop
+    &apos;oModelessDialog.execute()
+
+End Sub
+
 Sub replaceSelTextInWriter(txtReplacing)
 	Dim oDoc As Object
     Dim oController As Object
@@ -53,37 +81,11 @@ Function getSelectedTextInWriter()
         selectedText = &quot;&quot;
     End If
     
-    &apos; 顯示選取的文字
+    &apos; 處理可能的多段落情形 -- 0x0D 0x0A 轉成 \n\n
+    selectedText = replace(selectedText, vbCrLf, &quot;\n\n&quot;)
+    
     getSelectedTextInWriter = selectedText
-End Sub
-
-Sub showRewriteDialogBox
-    Dim oWindowPeer As Object
-    Dim oDlgModel as Object
-
-	oDlgModel = CreateUnoService(&quot;com.sun.star.awt.UnoControlDialogModel&quot;)
-	oDlgModel.Title = &quot;Dialog Title&quot;
-
-    DialogLibraries.LoadLibrary(&quot;aiAssistant&quot;)
-    
-    oModelessDialog = CreateUnoDialog( DialogLibraries.aiAssistant.dlgRewrite )
-    
-    &apos; 設置無模式視窗：取得當前 Writer 視窗的 WindowPeer，將它傳遞給對話框
-    oWindowPeer = ThisComponent.getCurrentController().getFrame().getContainerWindow()
-    oModelessDialog.createPeer(CreateUnoService(&quot;com.sun.star.awt.Toolkit&quot;), oWindowPeer)
-    
-    oListenerTop=createUnoListener(&quot;TopListen_&quot;, &quot;com.sun.star.awt.XTopWindowListener&quot;)
-    oModelessDialog.addTopWindowlistener(oListenerTop) 
-    
-    &apos; 顯示無模式視窗
-    Continue = true
-    do while Continue
-    	wait 20
-	    oModelessDialog.setVisible(True)
-	loop
-    &apos;oModelessDialog.execute()
-
-End Sub
+End Function
 
 sub btn_Cancel(e)
 	&apos; 取消
@@ -107,9 +109,11 @@ Sub btn_Send(e)
 	If selText = &quot;&quot; Then
 		msgbox &quot;請選取要重寫的文字&quot;
 		Exit Sub
+	else
+		msgbox &quot;即將改寫&quot; &amp; vbCrLf &amp; selText
 	End If
 	
-	txtInput = prompt &amp; &quot;\n&quot; &amp; selText
+	txtInput = selText &amp; &quot;\n&quot; &amp; prompt
 	
 	apiKey =  Utility.GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)	&apos; key
 	messages = &quot;[{&quot;&quot;role&quot;&quot;: &quot;&quot;system&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;You are a POWERFULL and Intelligent AI assistant.&quot;&quot;}, {&quot;&quot;role&quot;&quot;: &quot;&quot;user&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;&quot; &amp; txtInput &amp; &quot;&quot;&quot;}]&quot;
@@ -138,7 +142,7 @@ Function SendOpenAIRequest(prompt As String, apiKey As String) As String
     url =  Utility.GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)	&apos; api
     
     &apos; 設定請求的 JSON 內容
-    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-8b-instant&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;llama-3.1-70b-versatile&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
     
     &apos; 建立 XMLHTTP 物件
     Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)
