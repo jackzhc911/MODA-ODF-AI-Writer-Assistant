@@ -1,7 +1,7 @@
 # MODA-ODF-AI-Writer-Assistant
-一個擴充程式，可以外掛在數位發展部 MODA ODF工具，當做是AI寫手的助理。
+一個擴充程式，可以外掛在數位發展部 MODA ODF工具，當做是AI寫手的助理，模擬出部份 MS Office Copilot 的功能。
 
-使用前先到Groq申請一個API，把API放到ModaODFAIConfig.txt 。
+使用前先到Groq申請一個API（免費），把API放到ModaODFAIConfig.txt 。
 
 接著把ModaODFAIConfig.txt放到%AppData%\MODAODFApplicationTools\3\user目錄即可使用。
 
