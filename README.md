@@ -6,3 +6,5 @@
 接著把ModaODFAIConfig.txt放到%AppData%\MODAODFApplicationTools\3\user目錄即可使用。
 
 也可以用OpenAI，看個人心情。
+
+其它像稅務局（處）、地政…等內外網實體隔離的環境，接觸不到Internet的內網，則可以採用相容OpenAI API的解決方案，如LM Studio，只要在內網架好環境，修改ModaODFAIConfig.txt的API即可。
