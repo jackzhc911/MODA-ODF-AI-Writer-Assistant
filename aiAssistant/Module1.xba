@@ -38,11 +38,23 @@ Sub btn_Send(e)
     &apos; 顯示回應
     &apos; MsgBox result
     
-    &apos; 將回應插入到游標處
-    oDoc = ThisComponent
-    oText = oDoc.Text
-    oCursor = oDoc.CurrentController.getViewCursor()
-    oText.insertString oCursor, result, False
+    &apos; 將回應插入到游標處 -- 以下在完全空白的文件可行，但在表格內就會失敗
+    &apos;oDoc = ThisComponent
+    &apos;oText = oDoc.Text
+    &apos;oCursor = oDoc.CurrentController.getViewCursor()
+    &apos;oText.insertString oCursor, result, False
+    &apos; 將回應插入到游標處 -- 改成這樣做
+    dim document as object
+	dim dispatcher as object
+	
+	document = ThisComponent.CurrentController.Frame
+	dispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+	
+	dim args1(0) as new com.sun.star.beans.PropertyValue
+
+	args1(0).Name = &quot;Text&quot;
+	args1(0).Value = result
+	dispatcher.executeDispatch(document, &quot;.uno:InsertText&quot;, &quot;&quot;, 0, args1())
 	
 End Sub
 
