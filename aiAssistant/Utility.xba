@@ -13,10 +13,12 @@ Global oConfigDialog As Object
 Sub ShowConfigDialog()
     Dim sValue1 As String	&apos;API URL
     Dim sValue2 As String	&apos;API KEY
+    Dim sValue3 As String	&apos;MODEL NAME
     
     &apos; 讀取先前儲存的全域屬性值
     sValue1 = GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)
     sValue2 = GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)
+    sValue3 = GetUserConfig(&quot;ConfigValue3&quot;, &quot;&quot;)
     
     &apos; 創建並顯示對話框
     oConfigDialog = CreateUnoDialog(DialogLibraries.aiAssistant.dlgConfig)
@@ -24,16 +26,19 @@ Sub ShowConfigDialog()
     &apos; 將屬性值填入對話框的文字框
     oConfigDialog.getControl(&quot;ConfigField1&quot;).Text = sValue1
     oConfigDialog.getControl(&quot;ConfigField2&quot;).Text = sValue2
+    oConfigDialog.getControl(&quot;ConfigField3&quot;).Text = sValue3
     
     &apos; 顯示對話框，按下確定後才繼續執行
     If oConfigDialog.execute() = 1 Then
         &apos; 取得使用者輸入的值
         sValue1 = oConfigDialog.getControl(&quot;ConfigField1&quot;).Text
         sValue2 = oConfigDialog.getControl(&quot;ConfigField2&quot;).Text
+        sValue3 = oConfigDialog.getControl(&quot;ConfigField3&quot;).Text
         
         &apos; 儲存到全域配置中
         SetUserConfig(&quot;ConfigValue1&quot;, sValue1)
         SetUserConfig(&quot;ConfigValue2&quot;, sValue2)
+        SetUserConfig(&quot;ConfigValue3&quot;, sValue3)
     End If
     
     oConfigDialog.endDialog(1)
@@ -74,41 +79,73 @@ Function GetUserConfig(sKey As String, sDefault As String) As String
 &apos;    GetUserConfig = sDefault
 End Function
 
+REM  *****  BASIC  *****
+
+private Sub MapTest
+	Dim configMap As Object
+    configMap = com.sun.star.container.EnumerableMap.create(&quot;string&quot;, &quot;string&quot;) &apos; 創建 Map 物件
+    sLine = &quot;username=admin&quot;
+    arr = Split(sLine, &quot;=&quot;)
+
+    If UBound(arr) = 1 Then
+        configMap.put(arr(0), arr(1)) &apos; 新增鍵值對
+    End If
+    configMap.remove(arr(0))
+    configMap.put(arr(0), &quot;admin2&quot;)
+    
+    enu = configMap.createKeyEnumeration(False)
+    
+    Do While enu.hasMoreElements
+	    elem = enu.nextElement
+    	MsgBox(&quot;Key : &quot; &amp; elem)
+    	MsgBox(&quot;Value: &quot; &amp; configMap.get(elem))
+	Loop
+
+End Sub
+
 &apos; 儲存配置值到外部文字檔
 Sub SetUserConfig(sKey As String, sValue As String)
     Dim sFilePath As String
     sFilePath = GetConfigFilePath()
     
     Dim oFile As Integer
-    oFile = FreeFile
+    Dim sLine As String, arr() As String
+    Dim configMap As Object
+    configMap = com.sun.star.container.EnumerableMap.create(&quot;string&quot;, &quot;string&quot;) &apos; 創建 Map 物件
     
-    &apos; 讀取現有配置
-    Dim sLine As String, arr() As String, configDict As Object
-    Set configDict = CreateObject(&quot;Scripting.Dictionary&quot;)
+    &apos; 檢查檔案是否存在，若不存在，直接建立空 Map
+    If FileExists(sFilePath) Then
+        oFile = FreeFile
+        Open sFilePath For Input As #oFile
+        Do Until EOF(oFile)
+            Line Input #oFile, sLine
+            arr = Split(sLine, &quot;=&quot;)
+            If UBound(arr) = 1 Then
+                configMap.put(Trim(arr(0)), Trim(arr(1))) &apos; 新增鍵值對
+            End If
+        Loop
+        Close #oFile
+    End If
     
-    &apos; 開啟現有設定檔案
-    On Error Resume Next
-    Open sFilePath For Input As #oFile
-    Do Until EOF(oFile)
-        Line Input #oFile, sLine
-        arr = Split(sLine, &quot;=&quot;)
-        If UBound(arr) = 1 Then
-            configDict(arr(0)) = arr(1)
-        End If
-    Loop
-    Close #oFile
-    On Error GoTo 0
     
-    &apos; 更新指定的配置項目
-    configDict(sKey) = sValue
+    &apos; 更新或新增指定的配置項目
+    If configMap.containsKey(sKey) Then
+        configMap.remove(sKey)
+	    configMap.put(sKey, sValue)
+    Else
+        configMap.put(sKey, sValue) &apos; 新增鍵值對
+    End If
     
     &apos; 寫回更新後的配置
     oFile = FreeFile
     Open sFilePath For Output As #oFile
-    Dim k As Variant
-    For Each k In configDict.Keys
-        Print #oFile, k &amp; &quot;=&quot; &amp; configDict(k)
-    Next k
+    
+    enu = configMap.createKeyEnumeration(False)
+    Do While enu.hasMoreElements
+    	key = enu.nextElement
+    	Print #oFile, key &amp; &quot;=&quot; &amp; configMap.get(key)
+    Loop
+
     Close #oFile
 End Sub
 
@@ -117,4 +154,7 @@ Function GetConfigFilePath() As String
     &apos; 設定檔案儲存在應用程式的設定資料夾中
     GetConfigFilePath = Environ(&quot;APPDATA&quot;) &amp; &quot;\MODAODFApplicationTools\3\user\ModaODFAIConfig.txt&quot;
 End Function
+
+
+
 </script:module>
