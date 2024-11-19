@@ -34,6 +34,17 @@
 							<value>_self</value>
 						</prop>
 					</node>
+					<node oor:name="M3" oor:op="replace">
+						<prop oor:name="Title">
+							<value xml:lang="zh-TW">設定</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+		  					<value>vnd.sun.star.script:aiAssistant.Utility.ShowConfigDialog?language=Basic&amp;location=application</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
 				</node>
 			</node>
 		</node>
