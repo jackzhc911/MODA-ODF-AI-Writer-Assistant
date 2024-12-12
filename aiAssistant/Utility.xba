@@ -155,6 +155,43 @@ Function GetConfigFilePath() As String
     GetConfigFilePath = Environ(&quot;APPDATA&quot;) &amp; &quot;\MODAODFApplicationTools\3\user\ModaODFAIConfig.txt&quot;
 End Function
 
+Function SendOpenAIRequest(prompt As String) As String
+    Dim http As Object
+    Dim url As String
+    Dim requestBody As String
+    Dim response As String
+    
+    &apos; OpenAI API URL
+    url =  Utility.GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)	&apos; api
+  	apiKey =  Utility.GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)	&apos; key
+	modelName = Utility.GetUserConfig(&quot;ConfigValue3&quot;, &quot;&quot;)	&apos; modelName
+    
+    &apos; 設定請求的 JSON 內容
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;&quot; &amp; modelName &amp; &quot;&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    
+    &apos; 建立 XMLHTTP 物件
+    Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)
+    
+    &apos; 配置 HTTP POST 請求
+    http.Open &quot;POST&quot;, url, False
+    http.setRequestHeader &quot;Content-Type&quot;, &quot;application/json&quot;
+    http.setRequestHeader &quot;Authorization&quot;, &quot;Bearer &quot; &amp; apiKey
+    
+    &apos; 發送請求
+    &apos;msgbox requestBody
+    http.send requestBody
+    
+    &apos; 取得回應
+    If http.Status = 200 Then
+        &apos; 成功時解析回應
+        response = http.responseText
+    Else
+        &apos; 發生錯誤時回傳錯誤代碼
+        response = &quot;Error: &quot; &amp; http.Status &amp; &quot; - &quot; &amp; http.statusText
+    End If
+    
+    SendOpenAIRequest = response
+End Function
 
 
 </script:module>
