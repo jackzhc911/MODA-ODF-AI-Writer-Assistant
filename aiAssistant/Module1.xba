@@ -43,7 +43,7 @@ Sub btn_Send(e)
 	messages = &quot;[{&quot;&quot;role&quot;&quot;: &quot;&quot;system&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;You are a POWERFULL and Intelligent AI assistant.&quot;&quot;}, {&quot;&quot;role&quot;&quot;: &quot;&quot;user&quot;&quot;, &quot;&quot;content&quot;&quot;: &quot;&quot;&quot; &amp; prompt &amp; &quot;&quot;&quot;}]&quot;
 
     &apos; 呼叫 OpenAI API
-    responseText = SendOpenAIRequest(messages, apiKey, modelName)
+    responseText = SendOpenAIRequest(messages)
     
     &apos; 處理回傳值
     result = ExtractContent(responseText)

@@ -11,34 +11,34 @@ Global oConfigDialog As Object
 
 
 Sub ShowConfigDialog()
-    Dim sValue1 As String	&apos;API URL
-    Dim sValue2 As String	&apos;API KEY
-    Dim sValue3 As String	&apos;MODEL NAME
+    Dim apiUrl As String	&apos;API URL
+    Dim apiKey As String	&apos;API KEY
+    Dim modelName As String	&apos;MODEL NAME
     
     &apos; 讀取先前儲存的全域屬性值
-    sValue1 = GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)
-    sValue2 = GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)
-    sValue3 = GetUserConfig(&quot;ConfigValue3&quot;, &quot;&quot;)
+    apiUrl = GetUserConfig(&quot;ConfigValue1&quot;, &quot;&quot;)
+    apiKey = GetUserConfig(&quot;ConfigValue2&quot;, &quot;&quot;)
+    modelName = GetUserConfig(&quot;ConfigValue3&quot;, &quot;&quot;)
     
     &apos; 創建並顯示對話框
     oConfigDialog = CreateUnoDialog(DialogLibraries.aiAssistant.dlgConfig)
     
     &apos; 將屬性值填入對話框的文字框
-    oConfigDialog.getControl(&quot;ConfigField1&quot;).Text = sValue1
-    oConfigDialog.getControl(&quot;ConfigField2&quot;).Text = sValue2
-    oConfigDialog.getControl(&quot;ConfigField3&quot;).Text = sValue3
+    oConfigDialog.getControl(&quot;ConfigField1&quot;).Text = apiUrl
+    oConfigDialog.getControl(&quot;ConfigField2&quot;).Text = apiKey
+    oConfigDialog.getControl(&quot;ConfigField3&quot;).Text = modelName
     
     &apos; 顯示對話框，按下確定後才繼續執行
     If oConfigDialog.execute() = 1 Then
         &apos; 取得使用者輸入的值
-        sValue1 = oConfigDialog.getControl(&quot;ConfigField1&quot;).Text
-        sValue2 = oConfigDialog.getControl(&quot;ConfigField2&quot;).Text
-        sValue3 = oConfigDialog.getControl(&quot;ConfigField3&quot;).Text
+        apiUrl = oConfigDialog.getControl(&quot;ConfigField1&quot;).Text
+        apiKey = oConfigDialog.getControl(&quot;ConfigField2&quot;).Text
+        modelName = oConfigDialog.getControl(&quot;ConfigField3&quot;).Text
         
         &apos; 儲存到全域配置中
-        SetUserConfig(&quot;ConfigValue1&quot;, sValue1)
-        SetUserConfig(&quot;ConfigValue2&quot;, sValue2)
-        SetUserConfig(&quot;ConfigValue3&quot;, sValue3)
+        SetUserConfig(&quot;ConfigValue1&quot;, apiUrl)
+        SetUserConfig(&quot;ConfigValue2&quot;, apiKey)
+        SetUserConfig(&quot;ConfigValue3&quot;, modelName)
     End If
     
     oConfigDialog.endDialog(1)
@@ -54,7 +54,7 @@ End Sub
 
 
 &apos; 從外部文字檔讀取配置值
-Function GetUserConfig(sKey As String, sDefault As String) As String
+Function GetUserConfig(configKey As String, sDefault As String) As String
 &apos;    On Error GoTo ErrorHandler
     Dim sFilePath As String
     sFilePath = GetConfigFilePath()
@@ -67,7 +67,7 @@ Function GetUserConfig(sKey As String, sDefault As String) As String
     Do Until EOF(oFile)
         Line Input #oFile, sLine
         arr = Split(sLine, &quot;=&quot;)
-        If arr(0) = sKey Then
+        If arr(0) = configKey Then
             GetUserConfig = arr(1)
             Close #oFile
             Exit Function
@@ -104,7 +104,7 @@ private Sub MapTest
 End Sub
 
 &apos; 儲存配置值到外部文字檔
-Sub SetUserConfig(sKey As String, sValue As String)
+Sub SetUserConfig(configKey As String, configValue As String)
     Dim sFilePath As String
     sFilePath = GetConfigFilePath()
     
@@ -129,11 +129,11 @@ Sub SetUserConfig(sKey As String, sValue As String)
     
     
     &apos; 更新或新增指定的配置項目
-    If configMap.containsKey(sKey) Then
-        configMap.remove(sKey)
-	    configMap.put(sKey, sValue)
+    If configMap.containsKey(configKey) Then
+        configMap.remove(configKey)
+	    configMap.put(configKey, configValue)
     Else
-        configMap.put(sKey, sValue) &apos; 新增鍵值對
+        configMap.put(configKey, configValue) &apos; 新增鍵值對
     End If
     
     &apos; 寫回更新後的配置
@@ -155,7 +155,7 @@ Function GetConfigFilePath() As String
     GetConfigFilePath = Environ(&quot;APPDATA&quot;) &amp; &quot;\MODAODFApplicationTools\3\user\ModaODFAIConfig.txt&quot;
 End Function
 
-Function SendOpenAIRequest(prompt As String) As String
+Function SendOpenAIRequest(messages As String) As String
     Dim http As Object
     Dim url As String
     Dim requestBody As String
@@ -167,7 +167,7 @@ Function SendOpenAIRequest(prompt As String) As String
 	modelName = Utility.GetUserConfig(&quot;ConfigValue3&quot;, &quot;&quot;)	&apos; modelName
     
     &apos; 設定請求的 JSON 內容
-    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;&quot; &amp; modelName &amp; &quot;&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; prompt &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
+    requestBody = &quot;{&quot;&quot;model&quot;&quot;: &quot;&quot;&quot; &amp; modelName &amp; &quot;&quot;&quot;, &quot;&quot;messages&quot;&quot;: &quot; &amp; messages &amp; &quot;, &quot;&quot;temperature&quot;&quot;: 0.7}&quot;
     
     &apos; 建立 XMLHTTP 物件
     Set http = CreateObject(&quot;MSXML2.XMLHTTP.6.0&quot;)
